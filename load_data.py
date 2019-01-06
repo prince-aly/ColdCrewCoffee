@@ -29,8 +29,8 @@ print("Number of cuda devices: ",torch.cuda.device_count())
 plt.ion()   # interactive mode
 #os.listdir(os.getcwd())    #List everyting in working directory
 #os.chdir('/home/prince_aly/whales')
-dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
-rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+dataDir = "/home/prince_aly/whales/train.csv"
+rootDir = "/home/prince_aly/whales/train"
 data = pd.read_csv(dataDir)
 n = 42
 img_name = data.iloc[n,0]
@@ -94,7 +94,7 @@ fig = plt.figure()
 #        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir,
                                            root_dir= rootDir)
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=2, shuffle=True, num_workers = 0)
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=2, shuffle=True, num_workers = 4)
 classes = transformed_dataset.classes
 import matplotlib.pyplot as plt
 ## functions to show an image
