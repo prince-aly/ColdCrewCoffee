@@ -57,10 +57,10 @@ class CustomDatasetFromImages(Dataset):
         # Calculate len
         self.data_len = len(self.data_info.index)
         self.root_dir = root_dir
-        self.scale = transforms.Resize((64,64))
+        self.scale = transforms.Resize((128,128))
         self.to_tensor = transforms.ToTensor()
-#        self.center_crop = transforms.CenterCrop(224)
-        self.normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        self.center_crop = transforms.CenterCrop(224)
+        self.normalize = transforms.Normalize([0.5, 0.5 , 0.5], [0.5, 0.5 , 0.5])
         self.transform = transform
         self.classes = pd.Series(self.label_arr).unique()
     def __getitem__(self, index):
@@ -76,10 +76,10 @@ class CustomDatasetFromImages(Dataset):
             img = self.transform(img)
         else:
             img = self.scale(img)
-#            img = self.center_crop(img)
+            img = self.center_crop(img)
             img = self.to_tensor(img)
             img = self.normalize(img)
-        return [img, label]
+        return (img, label)
     def __len__(self):
         return self.data_len
 
@@ -87,11 +87,11 @@ class CustomDatasetFromImages(Dataset):
 
 fig = plt.figure()
 
-# Apply each of the above transforms on sample.
-data_transforms = transforms.Compose([transforms.RandomCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+## Apply each of the above transforms on sample.
+#data_transforms = transforms.Compose([transforms.RandomCrop(224),
+#        transforms.RandomHorizontalFlip(),
+#        transforms.ToTensor(),
+#        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir,
                                            root_dir= rootDir)
 trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=2, shuffle=True, num_workers = 0)
@@ -132,7 +132,7 @@ for epoch in range(2):  # loop over the dataset multiple times
         # get the inputs
         inputs, labels = data
         inputs = inputs.to(device)
-        labels = labels.to(device)
+        labels = labels
 
         # zero the parameter gradients
         optimizer.zero_grad()
