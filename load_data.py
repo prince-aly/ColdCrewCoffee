@@ -29,7 +29,9 @@ print("Number of cuda devices: ",torch.cuda.device_count())
 plt.ion()   # interactive mode
 #os.listdir(os.getcwd())    #List everyting in working directory
 #os.chdir('/home/prince_aly/whales')
-data = pd.read_csv('train.csv')
+dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
+rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+data = pd.read_csv(dataDir)
 n = 42
 img_name = data.iloc[n,0]
 img_class = data.iloc[n,1]
@@ -58,6 +60,7 @@ class CustomDatasetFromImages(Dataset):
         self.scale = transforms.Resize((64,64))
         self.to_tensor = transforms.ToTensor()
 #        self.center_crop = transforms.CenterCrop(224)
+        self.normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         self.transform = transform
         self.classes = pd.Series(self.label_arr).unique()
     def __getitem__(self, index):
@@ -68,14 +71,15 @@ class CustomDatasetFromImages(Dataset):
 #        img_as_tensor = self.to_tensor(img)
 
         # Get label(class) of the image based on the cropped pandas column
-        single_image_label = self.label_arr[index]
+        label = self.label_arr[index]
         if self.transform:
             img = self.transform(img)
         else:
             img = self.scale(img)
 #            img = self.center_crop(img)
             img = self.to_tensor(img)
-        return (img, single_image_label)
+            img = self.normalize(img)
+        return [img, label]
     def __len__(self):
         return self.data_len
 
@@ -88,9 +92,9 @@ data_transforms = transforms.Compose([transforms.RandomCrop(224),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-transformed_dataset = CustomDatasetFromImages(csv_path='train.csv',
-                                           root_dir='train/')
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=3, shuffle=True, num_workers = 0)
+transformed_dataset = CustomDatasetFromImages(csv_path= dataDir,
+                                           root_dir= rootDir)
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=2, shuffle=True, num_workers = 0)
 classes = transformed_dataset.classes
 import matplotlib.pyplot as plt
 ## functions to show an image
