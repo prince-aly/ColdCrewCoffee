@@ -68,6 +68,7 @@ class CustomDatasetFromImages(Dataset):
         self.normalize = transforms.Normalize([0.5, 0.5 , 0.5], [0.5, 0.5 , 0.5])
         self.transform = transform
         self.classes = pd.Series(self.label_arr).unique()
+        self.class_to_idx = {self.classes[i]: i for i in range(len(self.classes))}
     def __getitem__(self, index):
         # Get image name from the pandas df
         img_name = os.path.join(self.root_dir, self.image_arr[index])
@@ -84,7 +85,7 @@ class CustomDatasetFromImages(Dataset):
             img = self.center_crop(img)
             img = self.to_tensor(img)
             img = self.normalize(img)
-        return (img, label)
+        return (img, self.class_to_idx[label])
     def __len__(self):
         return self.data_len
 
@@ -99,7 +100,7 @@ fig = plt.figure()
 #        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir,
                                            root_dir= rootDir)
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=2, shuffle=True, num_workers = 0)
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=1, shuffle=True, num_workers = 0)
 classes = transformed_dataset.classes
 import matplotlib.pyplot as plt
 ## functions to show an image
@@ -137,7 +138,7 @@ for epoch in range(2):  # loop over the dataset multiple times
         # get the inputs
         inputs, labels = data
         inputs = Variable(inputs.to(device))
-        labels = labels
+        labels = Variable(labels)
 
         # zero the parameter gradients
         optimizer.zero_grad()
