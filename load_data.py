@@ -72,7 +72,7 @@ class CustomDatasetFromImages(Dataset):
     def __getitem__(self, index):
         # Get image name from the pandas df
         img_name = os.path.join(self.root_dir, self.image_arr[index])
-        img = Image.open(img_name)
+        img = Image.open(img_name).convert('RGB')
     
 #        img_as_tensor = self.to_tensor(img)
 
