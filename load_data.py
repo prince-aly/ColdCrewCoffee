@@ -24,14 +24,17 @@ import warnings
 #warnings.filterwarnings("ignore")
 
 #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Number of cuda devices: ",torch.cuda.device_count())
 
 plt.ion()   # interactive mode
 #os.listdir(os.getcwd())    #List everyting in working directory
 #os.chdir('/home/prince_aly/whales')
-dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
-rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+#dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
+#rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+dataDir = "/home/prince_aly/whales/train.csv"
+rootDir = "/home/prince_aly/whales/train"
+
 data = pd.read_csv(dataDir, header = 0)
 labelsArr = np.asarray(data.iloc[:, 1])
 classes = pd.Series(labelsArr).unique()
@@ -100,7 +103,7 @@ fig = plt.figure()
 #        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir,
                                            root_dir= rootDir)
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=1, shuffle=True, num_workers = 0)
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 4)
 classes = transformed_dataset.classes
 import matplotlib.pyplot as plt
 ## functions to show an image
@@ -125,20 +128,20 @@ model_ft = models.resnet18(pretrained=True)
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, len(classes))
 
-model_ft = model_ft.to(device)
+model_ft = torch.nn.DataParallel(model_ft.to(device))
 
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
-for epoch in range(2):  # loop over the dataset multiple times
+for epoch in range(20):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs
         inputs, labels = data
         inputs = Variable(inputs.to(device))
-        labels = Variable(labels)
+        labels = Variable(labels.to(device))
 
         # zero the parameter gradients
         optimizer.zero_grad()
