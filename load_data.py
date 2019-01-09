@@ -2,9 +2,9 @@
 """
 Created on Wed Jan  2 14:11:55 2019
 
-@author: Yahia
+@author: Team Cold Crew Coffee
 """
-
+#Import Necessary Libraries
 from __future__ import print_function, division
 import os
 import torch
@@ -19,28 +19,38 @@ from torchvision import transforms, utils, models
 import torchvision
 from torch.autograd import Variable
 from PIL import Image
+import matplotlib.pyplot as plt
+
 # Ignore warnings
 import warnings
-#warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#Use the gpu if its available so code does not to be changed based on machine running it
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
 print("Number of cuda devices: ",torch.cuda.device_count())
 
 plt.ion()   # interactive mode
-#os.listdir(os.getcwd())    #List everyting in working directory
+#List everyting in working directory
+#os.listdir(os.getcwd())    
+
+#Personal Directories
 #os.chdir('/home/prince_aly/whales')
 #dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
 #rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+
+#Machine Directories
 dataDir = "/home/prince_aly/whales/train.csv"
 rootDir = "/home/prince_aly/whales/train"
 
-data = pd.read_csv(dataDir, header = 0)
-labelsArr = np.asarray(data.iloc[:, 1])
-classes = pd.Series(labelsArr).unique()
-classes.sort()
-class_to_idx = {classes[i]: i for i in range(len(classes))}
-n = 42
+#Read the csv file with the image names and labels then match each label to a number
+data = pd.read_csv(dataDir, header = 0)  #Image names
+labelsArr = np.asarray(data.iloc[:, 1])  #labels for each image
+classes = pd.Series(labelsArr).unique()   #list of all the labels
+classes.sort()   #sort the vector
+class_to_idx = {classes[i]: i for i in range(len(classes))}  #Maps each label to a number
+
+#Print a sample image and its label to make sure everything is running correctly
+n = 42   #Arbitrary number
 img_name = data.iloc[n,0]
 img_class = data.iloc[n,1]
 print(img_name)
@@ -51,7 +61,7 @@ class CustomDatasetFromImages(Dataset):
         """
         Args:
             csv_path (string): path to csv file
-            img_path (string): path to the folder where images are
+            root_dir (string): path to the folder where images are
             transform: pytorch transforms for transforms and tensor conversion
         """
         # Transforms
@@ -65,49 +75,56 @@ class CustomDatasetFromImages(Dataset):
         # Calculate len
         self.data_len = len(self.data_info.index)
         self.root_dir = root_dir
+        #Reisze the image to 128 pixels to standarize all images
         self.scale = transforms.Resize((128,128))
+        #Transform to Tensor --- data type for pytorch to track gradients 
         self.to_tensor = transforms.ToTensor()
-        self.center_crop = transforms.CenterCrop(224)
-        self.normalize = transforms.Normalize([0.5, 0.5 , 0.5], [0.5, 0.5 , 0.5])
-        self.transform = transform
+        #Crop size is large than actual image to not, 224 is chosen based on the transfer learning model used (resnet18)-----Change accordingly
+        self.center_crop = transforms.CenterCrop(224)    
+        #Normalize the mean and SD for each image
+        self.normalize = transforms.Normalize([0.5, 0.5 , 0.5], [0.5, 0.5 , 0.5])   
+         #If the transform is specified in the input, otherwise it remains empty
+        self.transform = transform  
+    #list of all the labels (species)
         self.classes = pd.Series(self.label_arr).unique()
-        self.class_to_idx = {self.classes[i]: i for i in range(len(self.classes))}
+        #sort the vector
+        self.classes.sort()    
+        #Maps each label to a number
+        self.class_to_idx = {self.classes[i]: i for i in range(len(self.classes))}   
     def __getitem__(self, index):
         # Get image name from the pandas df
         img_name = os.path.join(self.root_dir, self.image_arr[index])
         img = Image.open(img_name).convert('RGB')
-    
-#        img_as_tensor = self.to_tensor(img)
-
         # Get label(class) of the image based on the cropped pandas column
         label = self.label_arr[index]
+        
+        #apply transformations if inputted, otherwise use standarized transforms specified in _init_ 
         if self.transform:
             img = self.transform(img)
         else:
+            #Apply the transformations 
             img = self.scale(img)
             img = self.center_crop(img)
             img = self.to_tensor(img)
             img = self.normalize(img)
-        return (img, self.class_to_idx[label])
+         #Returns the transformed image, and the number corresponding to that label
+        return (img, self.class_to_idx[label]) 
     def __len__(self):
+        #Return the total number of images---used in determining number of batches based on batch size
         return self.data_len
 
 
 
 fig = plt.figure()
 
-## Apply each of the above transforms on sample.
-#data_transforms = transforms.Compose([transforms.RandomCrop(224),
-#        transforms.RandomHorizontalFlip(),
-#        transforms.ToTensor(),
-#        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-transformed_dataset = CustomDatasetFromImages(csv_path= dataDir,
-                                           root_dir= rootDir)
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 4)
-classes = transformed_dataset.classes
-import matplotlib.pyplot as plt
+#Read all the images and apply different transformations if necessary
+transformed_dataset = CustomDatasetFromImages(csv_path= dataDir, root_dir= rootDir)   
+#Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 4)  
+
+
 ## functions to show an image
-#
+# Make sure images are showing approporiately based on batch size
 #
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
@@ -124,22 +141,30 @@ images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 # print labels
 
-model_ft = models.resnet18(pretrained=True)
-num_ftrs = model_ft.fc.in_features
-model_ft.fc = nn.Linear(num_ftrs, len(classes))
 
+###### Transfer learning model ##########
+model_ft = models.resnet18(pretrained=True)
+#Obtrain the number of features in the last layer of the model
+num_ftrs = model_ft.fc.in_features
+#Change the number of features to the number of classes in the dataset
+model_ft.fc = nn.Linear(num_ftrs, len(classes))
+#Run the model on the GPU if available, and run on parallel if multiple GPU's are available
 model_ft = torch.nn.DataParallel(model_ft.to(device))
 
-
+#Set the loss function: Cross Entropy Loss
 criterion = nn.CrossEntropyLoss()
+#Set the optimizer algorithm- stochasitc gradient descent
 optimizer = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+
 
 for epoch in range(20):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs
-        inputs, labels = data
+        inputs, labels = data     #Inputs are the images
+        #Set the inputs and labels as Variables (standard data type for Pytorch)
+        #Send the images and  labels to GPU if available
         inputs = Variable(inputs.to(device))
         labels = Variable(labels.to(device))
 
