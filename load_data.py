@@ -39,7 +39,9 @@ plt.ion()   # interactive mode
 #rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
 
 #Machine Directories
+#Location of where the csv file is 
 dataDir = "/home/prince_aly/whales/train.csv"
+#Location to folder with all the images
 rootDir = "/home/prince_aly/whales/train"
 
 #Read the csv file with the image names and labels then match each label to a number
@@ -161,7 +163,7 @@ for epoch in range(20):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
-        # get the inputs
+        # get the +
         inputs, labels = data     #Inputs are the images
         #Set the inputs and labels as Variables (standard data type for Pytorch)
         #Send the images and  labels to GPU if available
@@ -186,28 +188,83 @@ for epoch in range(20):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-#dataiter = iter(testloader)
-#images, labels = dataiter.next()
-#
-## print images
-#imshow(torchvision.utils.make_grid(images))
-#print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
-#
-#outputs = model_ft(images)
-#_, predicted = torch.max(outputs, 1)
-#
-#print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-#                              for j in range(4)))
-#
-#correct = 0
-#total = 0
-#with torch.no_grad():
-#    for data in testloader:
-#        images, labels = data
-#        outputs = model_ft(images)
-#        _, predicted = torch.max(outputs.data, 1)
-#        total += labels.size(0)
-#        correct += (predicted == labels).sum().item()
-#
-#print('Accuracy of the network on the 10000 test images: %d %%' % (
-#    100 * correct / total))
+class CustomDatasetFromImages(Dataset):
+    def __init__(self, csv_path, root_dir, transform = None):
+        """
+        Args:
+            csv_path (string): path to csv file
+            root_dir (string): path to the folder where images are
+            transform: pytorch transforms for transforms and tensor conversion
+        """
+        # Transforms
+        self.to_tensor = transforms.ToTensor()
+        self.image_arr = os.listdir(root_dir)
+        # Second column is the labels
+        self.label_arr = np.asarray(self.data_info.iloc[:, 1])
+        # Calculate len
+        self.data_len = len(self.data_info.index)
+        self.root_dir = root_dir
+        #Reisze the image to 128 pixels to standarize all images
+        self.scale = transforms.Resize((128,128))
+        #Transform to Tensor --- data type for pytorch to track gradients 
+        self.to_tensor = transforms.ToTensor()
+        #Crop size is large than actual image to not, 224 is chosen based on the transfer learning model used (resnet18)-----Change accordingly
+        self.center_crop = transforms.CenterCrop(224)    
+        #Normalize the mean and SD for each image
+        self.normalize = transforms.Normalize([0.5, 0.5 , 0.5], [0.5, 0.5 , 0.5])   
+         #If the transform is specified in the input, otherwise it remains empty
+        self.transform = transform  
+    #list of all the labels (species)
+        self.classes = pd.Series(self.label_arr).unique()
+        #sort the vector
+        self.classes.sort()    
+        #Maps each label to a number
+        self.class_to_idx = {self.classes[i]: i for i in range(len(self.classes))}   
+    def __getitem__(self, index):
+        # Get image name from the pandas df
+        img_name = os.path.join(self.root_dir, self.image_arr[index])
+        img = Image.open(img_name).convert('RGB')
+        # Get label(class) of the image based on the cropped pandas column
+        #apply transformations if inputted, otherwise use standarized transforms specified in _init_ 
+        if self.transform:
+            img = self.transform(img)
+        else:
+            #Apply the transformations 
+            img = self.scale(img)
+            img = self.center_crop(img)
+            img = self.to_tensor(img)
+            img = self.normalize(img)
+         #Returns the transformed image, and the number corresponding to that label
+        return (img) 
+    def __len__(self):
+        #Return the total number of images---used in determining number of batches based on batch size
+        return self.data_len
+
+
+######## Getting output for test data
+running_loss = 0.0
+for i, data in enumerate(trainloader, 0):
+    # get the inputs
+    inputs, labels = data     #Inputs are the images
+    #Set the inputs and labels as Variables (standard data type for Pytorch)
+    #Send the images and  labels to GPU if available
+    inputs = Variable(inputs.to(device))
+    labels = Variable(labels.to(device))
+
+    # zero the parameter gradients
+    optimizer.zero_grad()
+
+    # forward + backward + optimize
+    outputs = model_ft(inputs)
+    loss = criterion(outputs, labels)
+
+
+    # print statistics
+    running_loss += loss.item()
+    if i % 2000 == 1999:    # print every 2000 mini-batches
+        print('[%d, %5d] loss: %.3f' %
+              (epoch + 1, i + 1, running_loss / 2000))
+        running_loss = 0.0
+
+print('Finished Training')
+
