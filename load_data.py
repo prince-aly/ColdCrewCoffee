@@ -201,7 +201,7 @@ class TestDataset(Dataset):
         # Second column is the labels
         self.label_arr = np.asarray(self.data_info.iloc[:, 1])
         # Calculate len
-        self.data_len = len(self.data_info.index)
+        self.data_len = len(self.image_arr)
         self.root_dir = root_dir
         #Reisze the image to 128 pixels to standarize all images
         self.scale = transforms.Resize((128,128))
