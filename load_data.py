@@ -35,15 +35,15 @@ plt.ion()   # interactive mode
 
 #Personal Directories
 #os.chdir('/home/prince_aly/whales')
-dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
-rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+#dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
+#rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
 
 #Machine Directories
 #Location of where the csv file is 
-#dataDir = "/home/prince_aly/whales/train.csv"
+dataDir = "/home/prince_aly/whales/train.csv"
 #Location to folder with all the images
-#rootDir = "/home/prince_aly/whales/train"
-
+rootDir = "/home/prince_aly/whales/train"
+valDir =  "/home/prince_aly/whales/val"
 #Read the csv file with the image names and labels then match each label to a number
 data = pd.read_csv(dataDir, header = 0)  #Image names
 labelsArr = np.asarray(data.iloc[:, 1])  #labels for each image
@@ -122,7 +122,7 @@ fig = plt.figure()
 #Read all the images and apply different transformations if necessary
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir, root_dir= rootDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 0)  
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 4, pin_memory = True)  
 
 
 ## functions to show an image
@@ -198,8 +198,6 @@ class TestDataset(Dataset):
         # Transforms
         self.to_tensor = transforms.ToTensor()
         self.image_arr = os.listdir(root_dir)
-        # Second column is the labels
-        self.label_arr = np.asarray(self.data_info.iloc[:, 1])
         # Calculate len
         self.data_len = len(self.image_arr)
         self.root_dir = root_dir
@@ -212,13 +210,7 @@ class TestDataset(Dataset):
         #Normalize the mean and SD for each image
         self.normalize = transforms.Normalize([0.5, 0.5 , 0.5], [0.5, 0.5 , 0.5])   
          #If the transform is specified in the input, otherwise it remains empty
-        self.transform = transform  
-    #list of all the labels (species)
-        self.classes = pd.Series(self.label_arr).unique()
-        #sort the vector
-        self.classes.sort()    
-        #Maps each label to a number
-        self.class_to_idx = {self.classes[i]: i for i in range(len(self.classes))}   
+        self.transform = transform   
     def __getitem__(self, index):
         # Get image name from the pandas df
         img_name = os.path.join(self.root_dir, self.image_arr[index])
@@ -241,7 +233,7 @@ class TestDataset(Dataset):
 
 
 ######## Getting output for test data
-test_dataset = TestDataset(root_dir= rootDir)   
+test_dataset = TestDataset(root_dir= valDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
 testloader = torch.utils.data.DataLoader(test_dataset, batch_size=test_dataset.data_len, shuffle=True, num_workers = 4)  
 inputs, img_names = iter(testloader)
