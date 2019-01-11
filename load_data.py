@@ -35,14 +35,14 @@ plt.ion()   # interactive mode
 
 #Personal Directories
 #os.chdir('/home/prince_aly/whales')
-#dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
-#rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
+rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
 
 #Machine Directories
 #Location of where the csv file is 
-dataDir = "/home/prince_aly/whales/train.csv"
+#dataDir = "/home/prince_aly/whales/train.csv"
 #Location to folder with all the images
-rootDir = "/home/prince_aly/whales/train"
+#rootDir = "/home/prince_aly/whales/train"
 
 #Read the csv file with the image names and labels then match each label to a number
 data = pd.read_csv(dataDir, header = 0)  #Image names
@@ -122,7 +122,7 @@ fig = plt.figure()
 #Read all the images and apply different transformations if necessary
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir, root_dir= rootDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 4)  
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 0)  
 
 
 ## functions to show an image
@@ -159,7 +159,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
 
-for epoch in range(20):  # loop over the dataset multiple times
+for epoch in range(1):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
@@ -247,5 +247,6 @@ testloader = torch.utils.data.DataLoader(test_dataset, batch_size=test_dataset.d
 inputs, img_names = iter(testloader)
 inputs = Variable(inputs.to(device))
 outputs = model_ft(inputs)
-
+imgLabels = {classes[i] for i in outputs} 
+print( img_names, imgLabels)
 
