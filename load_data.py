@@ -188,11 +188,10 @@ for epoch in range(20):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-class CustomDatasetFromImages(Dataset):
-    def __init__(self, csv_path, root_dir, transform = None):
+class TestDataset(Dataset):
+    def __init__(self, root_dir, transform = None):
         """
         Args:
-            csv_path (string): path to csv file
             root_dir (string): path to the folder where images are
             transform: pytorch transforms for transforms and tensor conversion
         """
@@ -235,36 +234,18 @@ class CustomDatasetFromImages(Dataset):
             img = self.to_tensor(img)
             img = self.normalize(img)
          #Returns the transformed image, and the number corresponding to that label
-        return (img) 
+        return (img, self.image_arr[index]) 
     def __len__(self):
         #Return the total number of images---used in determining number of batches based on batch size
         return self.data_len
 
 
 ######## Getting output for test data
-running_loss = 0.0
-for i, data in enumerate(trainloader, 0):
-    # get the inputs
-    inputs, labels = data     #Inputs are the images
-    #Set the inputs and labels as Variables (standard data type for Pytorch)
-    #Send the images and  labels to GPU if available
-    inputs = Variable(inputs.to(device))
-    labels = Variable(labels.to(device))
+test_dataset = TestDataset(root_dir= rootDir)   
+#Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
+testloader = torch.utils.data.DataLoader(test_dataset, batch_size=test_dataset.data_len, shuffle=True, num_workers = 4)  
+inputs, img_names = iter(testloader)
+inputs = Variable(inputs.to(device))
+outputs = model_ft(inputs)
 
-    # zero the parameter gradients
-    optimizer.zero_grad()
-
-    # forward + backward + optimize
-    outputs = model_ft(inputs)
-    loss = criterion(outputs, labels)
-
-
-    # print statistics
-    running_loss += loss.item()
-    if i % 2000 == 1999:    # print every 2000 mini-batches
-        print('[%d, %5d] loss: %.3f' %
-              (epoch + 1, i + 1, running_loss / 2000))
-        running_loss = 0.0
-
-print('Finished Training')
 
