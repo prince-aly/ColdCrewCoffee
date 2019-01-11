@@ -34,16 +34,17 @@ plt.ion()   # interactive mode
 #os.listdir(os.getcwd())    
 
 #Personal Directories
-#os.chdir('/home/prince_aly/whales')
-#dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
-#rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
 
+#os.chdir('/home/prince_aly/whales')
+dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
+rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+valDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\val"
 #Machine Directories
 #Location of where the csv file is 
-dataDir = "/home/prince_aly/whales/train.csv"
+#dataDir = "/home/prince_aly/whales/train.csv"
 #Location to folder with all the images
-rootDir = "/home/prince_aly/whales/train"
-valDir =  "/home/prince_aly/whales/val"
+#rootDir = "/home/prince_aly/whales/train"
+#valDir =  "/home/prince_aly/whales/val"
 #Read the csv file with the image names and labels then match each label to a number
 data = pd.read_csv(dataDir, header = 0)  #Image names
 labelsArr = np.asarray(data.iloc[:, 1])  #labels for each image
@@ -235,10 +236,19 @@ class TestDataset(Dataset):
 ######## Getting output for test data
 test_dataset = TestDataset(root_dir= valDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
-testloader = torch.utils.data.DataLoader(test_dataset, batch_size=test_dataset.data_len, shuffle=True, num_workers = 4)  
-inputs, img_names = iter(testloader)
-inputs = Variable(inputs.to(device))
-outputs = model_ft(inputs)
-imgLabels = {classes[i] for i in outputs} 
-print( img_names, imgLabels)
+testloader = torch.utils.data.DataLoader(test_dataset, batch_size=100, shuffle=True, num_workers = 0)  
+
+outputss = []
+img_namess=  []
+for i, data in enumerate(testloader, 0):
+    inputs, img_names = data     #Inputs are the images
+    inputs = Variable(inputs.to(device))
+    outputs = model_ft(inputs)
+    outputss.append(outputs)
+    img_namess.append(img_names)
+
+imgLabels = pd.DataFrame({classes[i] for i in outputss})
+img_namess = pd.DataFrame(img_namess)
+imgLabels.to_csv('labels.csv', index = False)
+img_namess.to_csv('imgName.csv', index = False)
 
