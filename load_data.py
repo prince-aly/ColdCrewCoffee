@@ -36,15 +36,15 @@ plt.ion()   # interactive mode
 #Personal Directories
 
 #os.chdir('/home/prince_aly/whales')
-dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
-rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
-valDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\val"
+#dataDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train.csv"
+#rootDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\train"
+#valDir = "C:\\Users\\Yahia\\Desktop\\FunProjects\\Whales\\val"
 #Machine Directories
 #Location of where the csv file is 
-#dataDir = "/home/prince_aly/whales/train.csv"
+dataDir = "/home/prince_aly/whales/train.csv"
 #Location to folder with all the images
-#rootDir = "/home/prince_aly/whales/train"
-#valDir =  "/home/prince_aly/whales/val"
+rootDir = "/home/prince_aly/whales/train"
+valDir =  "/home/prince_aly/whales/val"
 #Read the csv file with the image names and labels then match each label to a number
 data = pd.read_csv(dataDir, header = 0)  #Image names
 labelsArr = np.asarray(data.iloc[:, 1])  #labels for each image
@@ -123,7 +123,7 @@ fig = plt.figure()
 #Read all the images and apply different transformations if necessary
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir, root_dir= rootDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=10, shuffle=True, num_workers = 4, pin_memory = True)  
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=5, shuffle=True, num_workers = 4, pin_memory = True)  
 
 
 ## functions to show an image
@@ -236,13 +236,14 @@ class TestDataset(Dataset):
 ######## Getting output for test data
 test_dataset = TestDataset(root_dir= valDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
-testloader = torch.utils.data.DataLoader(test_dataset, batch_size=100, shuffle=True, num_workers = 0)  
 
+testloader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers = 1, pin_memory = True)  
+model_ft = model_ft.eval()
 outputss = []
 img_namess=  []
 for i, data in enumerate(testloader, 0):
     inputs, img_names = data     #Inputs are the images
-    inputs = Variable(inputs.to(device))
+    inputs = Variable(inputs.to(device), volatile = True)
     outputs = model_ft(inputs)
     outputss.append(outputs)
     img_namess.append(img_names)
