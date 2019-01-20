@@ -251,4 +251,4 @@ imgLabels = pd.DataFrame({classes[i] for i in outputss})
 img_namess = pd.DataFrame(img_namess)
 imgLabels.to_csv('labels.csv', index = False)
 img_namess.to_csv('imgName.csv', index = False)
-
+print("Testing Complete")
