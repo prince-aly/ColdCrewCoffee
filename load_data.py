@@ -123,7 +123,7 @@ fig = plt.figure()
 #Read all the images and apply different transformations if necessary
 transformed_dataset = CustomDatasetFromImages(csv_path= dataDir, root_dir= rootDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
-trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=5, shuffle=True, num_workers = 4, pin_memory = True)  
+trainloader = torch.utils.data.DataLoader(transformed_dataset, batch_size=5, shuffle=True, num_workers = 4)  
 
 
 ## functions to show an image
@@ -237,7 +237,7 @@ class TestDataset(Dataset):
 test_dataset = TestDataset(root_dir= valDir)   
 #Load the dataset into batches, shuffle to decrease overfitting, and specify computational use
 
-testloader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers = 1, pin_memory = True)  
+testloader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers = 4)  
 model_ft = model_ft.eval()
 outputss = []
 img_namess=  []
